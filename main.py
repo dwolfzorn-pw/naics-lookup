@@ -136,9 +136,13 @@ class NAICSResult(BaseModel):
     description: Optional[str] = None
 
 
+class SearchResult(NAICSResult):
+    score: float
+
+
 class SearchResponse(BaseModel):
     query: str
-    results: list[NAICSResult]
+    results: list[SearchResult]
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +168,7 @@ def search(
     top = scored[:limit]
 
     results = [
-        NAICSResult(
+        SearchResult(
             code=r["code"],
             title=r["title"],
             description=r["description"] if include_description else None,
