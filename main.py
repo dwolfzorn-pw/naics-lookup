@@ -15,7 +15,7 @@ import re
 from rapidfuzz import fuzz
 
 logger = logging.getLogger(__name__)
-DATA_PATH = os.getenv("NAICS_DATA_PATH", "2022 NAICS Codes.xlsx")
+DATA_PATH = os.getenv("NAICS_DATA_PATH", "data/2022 NAICS Codes.xlsx")
 
 
 @asynccontextmanager
@@ -43,7 +43,7 @@ app = FastAPI(
 # Data loading
 # ---------------------------------------------------------------------------
 
-def load_naics(path: str = "2022 NAICS Codes.xlsx") -> list[dict]:
+def load_naics(path: str = "data/2022 NAICS Codes.xlsx") -> list[dict]:
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     ws = wb["Six Digit NAICS"]
     records = []
@@ -134,7 +134,6 @@ class NAICSResult(BaseModel):
     code: str
     title: str
     description: Optional[str] = None
-    score: float
 
 
 class SearchResponse(BaseModel):
@@ -191,7 +190,6 @@ def get_by_code(
                 code=r["code"],
                 title=r["title"],
                 description=r["description"],
-                score=1.0,
             )
     raise HTTPException(status_code=404, detail=f"NAICS code {naics_code} not found.")
 
