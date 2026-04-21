@@ -1,0 +1,162 @@
+{
+  "info": {
+    "name": "NAICS Lookup API",
+    "description": "Search 2022 6-digit NAICS codes by keyword. Returns top matches ranked by relevance.\n\n## Prerequisites\n- Python 3.10 or later\n- The file `2022 NAICS Codes.xlsx` in the project folder\n\n## How to Run the Server\n\n**Step 1 — Open a terminal and navigate to the project folder:**\n```\ncd \"C:\\Users\\David.Wolfzorn\\OneDrive - ProWriters\\Desktop\\NAICS Lookup API\"\n```\n\n**Step 2 — Install dependencies (first time only):**\n```\npip install -r requirements.txt\n```\n\n**Step 3 — Start the server:**\n```\nuvicorn main:app --reload\n```\n\nYou should see:\n```\nINFO: Loaded 1012 NAICS records from 2022 NAICS Codes.xlsx\nINFO: Uvicorn running on http://127.0.0.1:8000\n```\n\n**Step 4 — Confirm it is running:**\n\nOpen http://localhost:8000/health in your browser. You should see:\n```json\n{ \"status\": \"ok\", \"records_loaded\": 1012 }\n```\n\nThe server is now ready. Run requests from this collection against `{{baseUrl}}` (default: http://localhost:8000).\n\n## Stopping the Server\nPress `Ctrl + C` in the terminal.\n\n## Notes\n- `--reload` automatically restarts the server when you save changes to main.py. Remove it for production use.\n- To use a different port: `uvicorn main:app --port 8080`\n- To run from a different directory, set the data file path: `set NAICS_DATA_PATH=C:\\full\\path\\to\\2022 NAICS Codes.xlsx`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Search NAICS Codes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search?q=farming&include_description=false&limit=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "farming",
+              "description": "Search query (business type, activity, keywords). Min 2, max 200 characters."
+            },
+            {
+              "key": "include_description",
+              "value": "false",
+              "description": "Include full description text in results (true/false)."
+            },
+            {
+              "key": "limit",
+              "value": "5",
+              "description": "Number of results to return. Min 1, max 20. Default 5."
+            }
+          ]
+        },
+        "description": "Search 2022 6-digit NAICS codes by title and description. Returns up to `limit` best matches ranked by relevance score."
+      },
+      "response": [
+        {
+          "name": "200 OK – Results found",
+          "status": "OK",
+          "code": 200,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"query\": \"farming\",\n  \"results\": [\n    {\n      \"code\": \"111110\",\n      \"title\": \"Soybean Farming\",\n      \"description\": null,\n      \"score\": 147.5\n    },\n    {\n      \"code\": \"111120\",\n      \"title\": \"Oilseed (except Soybean) Farming\",\n      \"description\": null,\n      \"score\": 102.3\n    }\n  ]\n}"
+        },
+        {
+          "name": "422 Unprocessable Entity – Query too short",
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"detail\": [\n    {\n      \"type\": \"string_too_short\",\n      \"loc\": [\"query\", \"q\"],\n      \"msg\": \"String should have at least 2 characters\",\n      \"input\": \"a\"\n    }\n  ]\n}"
+        },
+        {
+          "name": "503 Service Unavailable – Data not loaded",
+          "status": "Service Unavailable",
+          "code": 503,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"detail\": \"NAICS data unavailable. Check server logs.\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Search with Description",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/search?q=software consulting&include_description=true&limit=3",
+          "host": ["{{baseUrl}}"],
+          "path": ["search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "software consulting"
+            },
+            {
+              "key": "include_description",
+              "value": "true"
+            },
+            {
+              "key": "limit",
+              "value": "3"
+            }
+          ]
+        },
+        "description": "Same as Search NAICS Codes but with full descriptions included in the response."
+      },
+      "response": []
+    },
+    {
+      "name": "Look Up Code by Number",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/code/111110",
+          "host": ["{{baseUrl}}"],
+          "path": ["code", "111110"]
+        },
+        "description": "Return the title and description for an exact 6-digit NAICS code. Must be exactly 6 numeric digits."
+      },
+      "response": [
+        {
+          "name": "200 OK – Code found",
+          "status": "OK",
+          "code": 200,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"code\": \"111110\",\n  \"title\": \"Soybean Farming\",\n  \"description\": \"This industry comprises establishments primarily engaged in growing soybeans and/or producing soybean seeds.\",\n  \"score\": 1.0\n}"
+        },
+        {
+          "name": "404 Not Found – Code does not exist",
+          "status": "Not Found",
+          "code": 404,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"detail\": \"NAICS code 000000 not found.\"\n}"
+        },
+        {
+          "name": "422 Unprocessable Entity – Invalid format",
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"detail\": [\n    {\n      \"type\": \"string_pattern_mismatch\",\n      \"loc\": [\"path\", \"naics_code\"],\n      \"msg\": \"String should match pattern '^\\\\d{6}$'\",\n      \"input\": \"abc\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Returns server status and the number of NAICS records loaded into memory."
+      },
+      "response": [
+        {
+          "name": "200 OK – Healthy",
+          "status": "OK",
+          "code": 200,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"status\": \"ok\",\n  \"records_loaded\": 1012\n}"
+        },
+        {
+          "name": "200 OK – Degraded (data missing)",
+          "status": "OK",
+          "code": 200,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"status\": \"degraded\",\n  \"records_loaded\": 0\n}"
+        }
+      ]
+    }
+  ]
+}
